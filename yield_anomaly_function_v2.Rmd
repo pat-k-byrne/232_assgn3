@@ -1,0 +1,121 @@
+---
+title: 'Almond Yield Anomaly: Function & Analysis'
+author: "Pat Byrne, Hannah Garcia, and Yani Pohl"
+date: "4/7/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE, warning=FALSE}
+# Install packages
+library(tidyverse)
+library(lubridate)
+library(patchwork)
+library(kableExtra)
+library(tinytex)
+```
+
+### Read in climate data and run yield_anomaly function
+```{r, message=FALSE, warning=FALSE}
+# Read in data frame & convert date column (D) to a date
+clim.df <- read.table('clim_edited.txt',header = TRUE) %>% 
+  mutate(
+    D = as.Date(D)
+  )
+
+# Read in yield_anomaly.R function
+source("yield_anomaly.R")
+
+# Run the function with clim.df using years 2000-2002
+test.func <- yield_anomaly(input.dataframe = clim.df, years.calc = c(2000,2001,2002))
+test.func[1,]
+test.func[2,]
+test.func[3,]
+```
+
+
+### Summarize the results 
+
+```{r, fig.cap="Almond yield anomaly (ton/acre), average minimum January temperature (C), and total February precipitation (mm) for years 1989 to 2010. The almond yield anomaly is the difference from the 1983-2003 average yield.", message=FALSE, warning=FALSE}
+# Calculate almond yield anomaly for 1988-2010
+
+almond.func <- yield_anomaly(input.dataframe = clim.df, years.calc = c(1989:2010))
+
+# make a df of the almond yield anomaly for each year
+almond.df = tibble(year = almond.func[,1], anomaly= almond.func[,2])
+
+# Create data frames to summarize mean temp for January and mean precip for February for each year
+
+temp.df <- clim.df %>%
+  filter(month == 1) %>%
+  group_by(year) %>%
+  summarise(temp = mean(tmin_c))
+
+precip.df <- clim.df %>%
+  filter(month == 2) %>%
+  group_by(year) %>%
+  summarise(precip = sum(precip))
+
+# Graph anomaly, temp, and precip using 'patchwork'
+
+anomaly.plot <- ggplot(almond.df, aes(x = year, y = anomaly)) +
+  geom_line(color = "darkgreen") +
+  geom_point(color = "darkgreen") +
+  labs(title = "Almond Yield Anomaly (ton/acre)")
+
+temp.plot <- ggplot(data = temp.df, aes(x = year, y = temp)) +
+  geom_line(color = "red") +
+  geom_point(color = "red") +
+  labs(title = "Average January Temperature (C)")
+
+precip.plot <- ggplot(precip.df, aes(x = year, y = precip)) +
+  geom_line(color = "blue") +
+  geom_point(color = "blue") +
+  labs(title = "Total February Precipitation (mm)")
+
+(temp.plot|precip.plot)/anomaly.plot
+
+```
+
+
+```{r, message=FALSE, warning=FALSE}
+# Merge dataframes
+
+almond_temp <- inner_join(almond.df, temp.df, by="year")
+total <- inner_join(almond_temp, precip.df, by="year")
+
+# create table
+table  <- total %>% 
+  kable(col.names = c("Year",
+               "Yield Anomaly (ton/acre)",
+               "Average Minimum Temperature (C)",
+               "Total Precipitation (mm)")) %>% 
+  kable_styling(bootstrap_options = "bordered",
+                full_width = F,
+                position = "left")
+  
+  
+table
+
+```
+
+**Table 1.** Almond yield anomaly (ton/acre), average minimum January temperature (C), and total February precipitation (mm) for years 1989 to 2010. The almond yield anomaly is the difference from the 1983-2003 average yield.
+
+```{r, message=FALSE, warning=FALSE}
+# calculate average temperature & precip of all years
+# mean(total$temp) = 8.7
+# mean(total$precip) = 142.1161
+```
+
+### Write one paragraph summarizing your findings 
+
+There were 3 years that had noticeably higher almond years than the 1983-2003 average: 1995, 2005, and 2008. The average minimum January temperature for these years were 11.6 C, 9.5 C, and 8.5 C, respectively. The average minimum January temperature for all years was approximately 8.7 C; years 1995 and 2005 had higher than average temperatures, which could potentially be contributing to their higher almond yields. Regarding precipitation, years 1995 and 2008 had fairly low totals. In 2005, precipitation totals were 213 mm, greater than the average total precipitation of years 1989-2010, which averaged approximately 142 mm.
+
+On the other hand, the years with the lowest almond yield anomalies were: 1989, 1999, 2003, and 2004. These years had yields that were lower than the 1983-2008 average. From these low yield years, all years except 2003 had average temperatures that were lower than the 8.7 average. Interestingly, years with low almond yields did not have significantly less precipitation than years with high yields, besides 1999, which had 0 mm of February precipitation. 
+
+Overall, there is not a clear trend of how the average January minimum temperature and total February precipitation affects almond yield anomalies. There may be more information that is needed to draw definite conclusions. For example, there could have been agricultural pests that decimated crops or issues with pollinator activity. However, our function, 'yield_anomaly.R' can be used by almond farmers to predict their almond yield based on minimum temperature and total rainfall parameters. 
