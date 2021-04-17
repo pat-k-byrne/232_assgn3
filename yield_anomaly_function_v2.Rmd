@@ -18,6 +18,7 @@ library(lubridate)
 library(patchwork)
 library(kableExtra)
 library(tinytex)
+library(purrr)
 ```
 
 ### Read in climate data and run yield_anomaly function
@@ -29,13 +30,59 @@ clim.df <- read.table('clim_edited.txt',header = TRUE) %>%
   )
 
 # Read in yield_anomaly.R function
-source("yield_anomaly.R")
+source("yield_anomaly_v3.R")
+
+intermed.Jan <- clim.df %>% 
+  filter(month == 1) %>% 
+  group_by(year) %>% 
+  summarise(
+    totprcp = sum(precip)
+  )
+
+intermed.Feb <- clim.df %>% 
+  filter(month == 2) %>% 
+  group_by(year) %>% 
+  summarise(
+    mintemp = mean(tmin_c)
+  )
+
+total_precip <- intermed.Jan$totprcp
+minimum_temps <- intermed.Feb$mintemp
+anom_years <- as.numeric(intermed.Feb$year)
+```
+
+
+```{r, message=FALSE, warning=FALSE}
+test.years = c(2000,2001,2002)
+test.precip = total_precip[12:14]
+test.temp = minimum_temps[12:14]
 
 # Run the function with clim.df using years 2000-2002
-test.func <- yield_anomaly(input.dataframe = clim.df, years.calc = c(2000,2001,2002))
-test.func[1,]
-test.func[2,]
-test.func[3,]
+test.func <- yield_anomaly(precip = test.precip, min_temp = test.temp, years.calc = test.years)
+test.func[1]
+test.func[2]
+test.func[3]
+```
+
+```{r}
+rand.p2 <- rnorm(n = 500, mean = 0.0043, sd = 0.001)
+```
+
+
+
+```{r}
+res = rand.p2 %>% map_dfc(~yield_anomaly(precip = total_precip, min_temp = minimum_temps, years.calc = anom_years, p2=.x))
+
+```
+
+
+```{r}
+head(res)
+# turn it into a data frame to support adding colums
+colnames(res)=anom_years
+
+# rearrange to plot
+resg=as.data.frame(res) %>% pivot_longer(everything(),names_to="Keff", values_to="Power")
 ```
 
 

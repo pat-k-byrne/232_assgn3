@@ -15,12 +15,8 @@
 yield_anomaly = function(precip, min_temp, years.calc, t1=-0.015, t2=-0.0046, p1=-0.07, p2=0.0043, inter=0.28) {
   
   calc.anomaly <- t1*min_temp + t2*min_temp^2 + p1*precip + p2*precip^2 + inter # Calculate yield anomaly in year desired based on Lobell equation
-
-  res.matrix <- matrix(,nrow = length(years.calc), ncol = 2) # Create a matrix to store resuls
-  res.matrix[,1] = years.calc # Column 1 of results matrix is years that you inputted for calculation
-  res.matrix[,2] = calc.anomaly # Column 2 is calculated anomaly for those years
   
-  return(res.matrix)
+  return(calc.anomaly)
 }
 
 
