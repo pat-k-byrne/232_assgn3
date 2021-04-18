@@ -58,7 +58,8 @@ test.precip = total_precip[12:14]
 test.temp = minimum_temps[12:14]
 
 # Run the function with clim.df using years 2000-2002
-test.func <- yield_anomaly(precip = test.precip, min_temp = test.temp, years.calc = test.years)
+# Checking again because yield_anomaly_v3.R uploads a new version of the yield_anonaly() function
+test.func <- yield_anomaly(precip = test.precip, min_temp = test.temp)
 test.func[1]
 test.func[2]
 test.func[3]
@@ -71,8 +72,22 @@ rand.p2 <- rnorm(n = 500, mean = 0.0043, sd = 0.001)
 
 
 ```{r}
-res = rand.p2 %>% map_dfc(~yield_anomaly(precip = total_precip, min_temp = minimum_temps, years.calc = anom_years, p2=.x))
+res = rand.p2 %>% 
+  map_dfc(~yield_anomaly(precip = total_precip, 
+                         min_temp = minimum_temps, 
+                         p2=.x))
 
+```
+
+```{r}
+colnames(res) = rand.p2
+res$yrs <- anom_years
+```
+
+
+```{r}
+resg = res %>% 
+  pivot_longer(!yrs,names_to="coeff_p2", values_to="yield_anomaly")
 ```
 
 
@@ -82,7 +97,7 @@ head(res)
 colnames(res)=anom_years
 
 # rearrange to plot
-resg=as.data.frame(res) %>% pivot_longer(everything(),names_to="Keff", values_to="Power")
+resg = as.data.frame(res) %>% pivot_longer(everything(),names_to="Keff", values_to="Power")
 ```
 
 

@@ -1,0 +1,104 @@
+---
+title: 'Almond Yield Anomaly: Function & Analysis'
+author: "Pat Byrne, Hannah Garcia, and Yani Pohl"
+date: "4/7/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE, warning=FALSE}
+# Install packages
+library(tidyverse)
+library(lubridate)
+library(patchwork)
+library(kableExtra)
+library(tinytex)
+library(purrr)
+```
+
+### Read in climate data and run yield_anomaly function
+```{r, message=FALSE, warning=FALSE}
+# Read in data frame & convert date column (D) to a date
+clim.df <- read.table('clim_edited.txt',header = TRUE) %>% 
+  mutate(
+    D = as.Date(D)
+  )
+
+# Read in yield_anomaly.R function
+# NOTE: function has been rewritten since the last assignment
+source("yield_anomaly_v3.R")
+
+# Some data wrangling before using it in the function/model
+intermed.Jan <- clim.df %>% 
+  filter(month == 1) %>% 
+  group_by(year) %>% 
+  summarise(
+    totprcp = sum(precip)
+  )
+
+intermed.Feb <- clim.df %>% 
+  filter(month == 2) %>% 
+  group_by(year) %>% 
+  summarise(
+    mintemp = mean(tmin_c)
+  )
+
+# Vector of total precipitation in January
+total_precip <- intermed.Jan$totprcp
+# Vector of mean minimum daily temperature in February
+minimum_temps <- intermed.Feb$mintemp
+# Vector of years with indices that match those of the precipitation and temperature vectors
+anom_years <- as.numeric(intermed.Feb$year)
+```
+
+
+```{r, message=FALSE, warning=FALSE}
+# Run the function with clim.df using years 2000-2002 - looks good as of this run
+# Checking again because yield_anomaly_v3.R uploads a new version of the yield_anonaly() function
+test.years = c(2000,2001,2002)
+test.precip = total_precip[12:14]
+test.temp = minimum_temps[12:14]
+
+test.func <- yield_anomaly(precip = test.precip, min_temp = test.temp)
+test.func[1] # Should be 9.59
+test.func[2] # Should be 159.51
+test.func[3] # Should be 0.24
+```
+
+
+```{r}
+# Vector of 500 randomly generated p2 coefficients
+rand.p2 <- rnorm(n = 500, mean = 0.0043, sd = 0.001)
+# Running the yield_anomaly() function for each year 500 times, using a different p2 coefficient each time
+# Returns a dataframe with a number of rows equal to the number of years/length of the vectors input to "precip =" and "min_temp =" arguments and a number of columns equal to the length of rand.p2 (each corresponding to the results for that p2 coefficient) 
+res = rand.p2 %>% 
+  map_dfc(~yield_anomaly(precip = total_precip, 
+                         min_temp = minimum_temps, 
+                         p2=.x))
+```
+
+```{r}
+# Giving this res dataframe column names corresponding to the p2 coefficient used to generate those results 
+colnames(res) = rand.p2
+# Adding another column with the years to which the results correspond 
+res$yrs <- anom_years
+```
+
+
+```{r}
+# Pivot the res dataframe to long format
+resg = res %>% 
+  pivot_longer(!yrs,names_to="coeff_p2", values_to="anomaly")
+```
+
+```{r}
+# Plotting the results - still a work in progress
+ggplot(resg, aes(yrs, anomaly, fill=yrs))+geom_boxplot() + labs(y="Anomaly (tons/acre)", "Year")
+
+```
+
