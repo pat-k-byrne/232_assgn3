@@ -98,7 +98,9 @@ resg = res %>%
 
 ```{r}
 # Plotting the results - still a work in progress
-ggplot(resg, aes(yrs, anomaly, fill=yrs))+geom_boxplot() + labs(y="Anomaly (tons/acre)", "Year")
+ggplot(resg, aes(yrs, anomaly, group=yrs))+
+  geom_boxplot() + 
+  labs(y="Anomaly (tons/acre)", "Year") 
 
 ```
 
