@@ -32,6 +32,8 @@ clim.df <- read.table('clim_edited.txt',header = TRUE) %>%
 # Read in yield_anomaly.R function
 # NOTE: function has been rewritten since the last assignment
 source("yield_anomaly_v3.R")
+source("compute_NPV.R")
+
 
 # Some data wrangling before using it in the function/model
 intermed.Jan <- clim.df %>% 
@@ -94,11 +96,26 @@ res$yrs <- anom_years
 # Pivot the res dataframe to long format
 resg = res %>% 
   pivot_longer(!yrs,names_to="coeff_p2", values_to="anomaly")
+
+ann_sum <- resg %>% 
+  group_by(yrs) %>% 
+  summarize(
+    mean_anomaly = mean(anomaly),
+    mean_yield = 1 + mean_anomaly,
+    yield_value = 2.5*2000*mean_yield,
+    net_profit = yield_value - 3800
+  )
+
+npv_sum <- ann_sum %>% 
+  mutate(npv = compute_NPV(net_profit, yrs - yrs[1], discount = 0.12))
+    
+
+
 ```
 
 ```{r}
 # Plotting the results - still a work in progress
-ggplot(resg, aes(yrs, anomaly, group=yrs))+
+ggplot(resg, aes(yrs, anomaly, group=yrs)) +
   geom_boxplot() + 
   labs(y="Anomaly (tons/acre)", "Year") 
 
