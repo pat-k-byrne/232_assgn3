@@ -108,8 +108,14 @@ ann_sum <- resg %>%
 
 npv_sum <- ann_sum %>% 
   mutate(npv = compute_NPV(net_profit, yrs - yrs[1], discount = 0.12))
-    
 
+npv_all <- resg %>% 
+  mutate(
+    yield = 1 + anomaly,
+    yield_value = 2.5*2000*yield,
+    profit = yield_value - 3800,
+    npv_profit = compute_NPV(profit, yrs - yrs[1], discount = 0.12)
+  )
 
 ```
 
@@ -117,7 +123,11 @@ npv_sum <- ann_sum %>%
 # Plotting the results - still a work in progress
 ggplot(resg, aes(yrs, anomaly, group=yrs)) +
   geom_boxplot() + 
-  labs(y="Anomaly (tons/acre)", "Year") 
+  labs(y="Anomaly (tons/acre)", "Year")
+
+ggplot(npv_all, aes(yrs, npv_profit, group=yrs)) +
+  geom_boxplot() + 
+  labs(y="NPV Profit ($/acre)", "Year") 
 
 ```
 
