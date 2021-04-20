@@ -1,7 +1,7 @@
 ---
-title: 'Almond Yield Anomaly: Function & Analysis'
+title: 'Almond Yield Anomaly: Sensitivity Analysis & NPV'
 author: "Pat Byrne, Hannah Garcia, and Yani Pohl"
-date: "4/7/2021"
+date: "4/20/2021"
 output:
   pdf_document: default
   html_document: default
@@ -73,7 +73,7 @@ test.func[3] # Should be 0.24
 ```
 
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 # Vector of 500 randomly generated p2 coefficients
 rand.p2 <- rnorm(n = 500, mean = 0.0043, sd = 0.001)
 # Running the yield_anomaly() function for each year 500 times, using a different p2 coefficient each time
@@ -84,7 +84,7 @@ res = rand.p2 %>%
                          p2=.x))
 ```
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 # Giving this res dataframe column names corresponding to the p2 coefficient used to generate those results 
 colnames(res) = rand.p2
 # Adding another column with the years to which the results correspond 
@@ -92,7 +92,7 @@ res$yrs <- anom_years
 ```
 
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 # Pivot the res dataframe to long format
 resg = res %>% 
   pivot_longer(!yrs,names_to="coeff_p2", values_to="anomaly")
@@ -119,15 +119,24 @@ npv_all <- resg %>%
 
 ```
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 # Plotting the results - still a work in progress
-ggplot(resg, aes(yrs, anomaly, group=yrs)) +
+boxplot1 <- ggplot(resg, aes(yrs, anomaly, group=yrs)) +
   geom_boxplot() + 
   labs(y="Anomaly (tons/acre)", "Year")
 
-ggplot(npv_all, aes(yrs, npv_profit, group=yrs)) +
+boxplot1
+```
+
+
+**Figure 1.** Boxplot of almond yield anomalies (tons/acre) by year. 
+
+```{r}
+boxplot2 <- ggplot(npv_all, aes(yrs, npv_profit, group=yrs)) +
   geom_boxplot() + 
   labs(y="NPV Profit ($/acre)", "Year") 
 
+boxplot2
 ```
 
+**Figure 2.** Boxplot of the net present value (NPV) of almond yield profits ($/acre) by year. 
