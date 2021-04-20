@@ -66,13 +66,13 @@ test.years = c(2000,2001,2002)
 test.precip = total_precip[12:14]
 test.temp = minimum_temps[12:14]
 
-test.func <- yield_anomaly(precip = test.precip, min_temp = test.temp)
-test.func[1] # Should be 9.59
-test.func[2] # Should be 159.51
-test.func[3] # Should be 0.24
+# test.func <- yield_anomaly(precip = test.precip, min_temp = test.temp)
+# test.func[1] # 9.59
+# test.func[2] #159.51
+# test.func[3] # 0.24
 ```
 
-
+### Sensitivity Analysis 
 ```{r, message=FALSE, warning=FALSE}
 # Vector of 500 randomly generated p2 coefficients
 rand.p2 <- rnorm(n = 500, mean = 0.0043, sd = 0.001)
@@ -91,7 +91,7 @@ colnames(res) = rand.p2
 res$yrs <- anom_years
 ```
 
-
+### Calculate profit and find NPV
 ```{r, message=FALSE, warning=FALSE}
 # Pivot the res dataframe to long format
 resg = res %>% 
@@ -119,8 +119,9 @@ npv_all <- resg %>%
 
 ```
 
+### Figures 
 ```{r, message=FALSE, warning=FALSE}
-# Plotting the results - still a work in progress
+# Plotting the results for anomaly sensitivity analysis
 boxplot1 <- ggplot(resg, aes(yrs, anomaly, group=yrs)) +
   geom_boxplot() + 
   labs(y="Anomaly (tons/acre)", "Year")
@@ -132,6 +133,7 @@ boxplot1
 **Figure 1.** Boxplot of almond yield anomalies (tons/acre) by year. 
 
 ```{r}
+# Plotting the results of NPV 
 boxplot2 <- ggplot(npv_all, aes(yrs, npv_profit, group=yrs)) +
   geom_boxplot() + 
   labs(y="NPV Profit ($/acre)", "Year") 
